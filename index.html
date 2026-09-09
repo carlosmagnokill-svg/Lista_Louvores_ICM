@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0f5132" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Louvores ICM" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
   <title>Lista de Louvores ICM</title>
 
   <!-- Leitura dos arquivos .xlsx -->
@@ -83,6 +89,31 @@
       box-shadow:var(--shadow);
       padding:15px;
       margin-bottom:14px;
+    }
+
+    .install-card{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:center;
+      border-left:4px solid var(--green);
+    }
+
+    .install-card strong{
+      display:block;
+      font-size:15px;
+      margin-bottom:3px;
+    }
+
+    .install-card p{
+      margin:0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .install-card .btn{
+      white-space:nowrap;
     }
 
     .section-title{
@@ -413,6 +444,8 @@
     }
 
     @media (max-width:520px){
+      .install-card{grid-template-columns:1fr}
+      .install-card .btn{width:100%}
       .search-row,.manual-row{grid-template-columns:1fr}
       .search-row .btn,.manual-row .btn{width:100%}
       .song-actions{grid-template-columns:1fr 1fr}
@@ -447,6 +480,16 @@
         <p id="baseStatus">Preparando coletâneas...</p>
       </div>
     </header>
+
+    <section class="card install-card">
+      <div>
+        <strong>Salvar o App no celular</strong>
+        <p id="installHint">Cria um atalho na tela inicial. Não usa APK nem Play Store.</p>
+      </div>
+      <button id="installAppBtn" class="btn btn-primary" type="button">
+        Salvar App
+      </button>
+    </section>
 
     <section class="card">
       <div class="section-title">
@@ -528,7 +571,7 @@
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.1.0 • Lista de Louvores ICM
+      v1.2.0 • Lista de Louvores ICM
     </p>
   </main>
 
@@ -554,6 +597,8 @@
         loadError: $("loadError"),
         retryBtn: $("retryBtn"),
         baseStatus: $("baseStatus"),
+        installAppBtn: $("installAppBtn"),
+        installHint: $("installHint"),
         searchInput: $("searchInput"),
         clearSearchBtn: $("clearSearchBtn"),
         titleOnly: $("titleOnly"),
@@ -575,6 +620,7 @@
       let worshipList = [];
       let toastTimer = null;
       let searchTimer = null;
+      let deferredInstallPrompt = null;
 
       function normalizeText(value) {
         return String(value ?? "")
@@ -1145,6 +1191,105 @@
           showToast("Não foi possível abrir o compartilhamento. O PDF foi salvo.");
         }
       }
+
+      function isStandaloneMode() {
+        return window.matchMedia("(display-mode: standalone)").matches ||
+          window.navigator.standalone === true;
+      }
+
+      function isIOS() {
+        return /iphone|ipad|ipod/i.test(navigator.userAgent);
+      }
+
+      function updateInstallButton() {
+        if (isStandaloneMode()) {
+          els.installAppBtn.textContent = "App salvo ✓";
+          els.installAppBtn.disabled = true;
+          els.installHint.textContent = "O atalho já está salvo na tela inicial deste aparelho.";
+          return;
+        }
+
+        els.installAppBtn.disabled = false;
+        els.installAppBtn.textContent = "Salvar App";
+
+        if (deferredInstallPrompt) {
+          els.installHint.textContent =
+            "Toque no botão para adicionar o app à tela inicial do Android.";
+        } else if (isIOS()) {
+          els.installHint.textContent =
+            "No iPhone: toque em Compartilhar e depois em Adicionar à Tela de Início.";
+        } else {
+          els.installHint.textContent =
+            "Cria um atalho na tela inicial. Não usa APK nem Play Store.";
+        }
+      }
+
+      async function installApp() {
+        if (isStandaloneMode()) {
+          showToast("O App já está salvo neste aparelho.");
+          return;
+        }
+
+        if (deferredInstallPrompt) {
+          try {
+            deferredInstallPrompt.prompt();
+            const choice = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+
+            if (choice && choice.outcome === "accepted") {
+              showToast("App adicionado à tela inicial.");
+            } else {
+              showToast("Operação cancelada.");
+            }
+
+            updateInstallButton();
+            return;
+          } catch (error) {
+            console.error(error);
+          }
+        }
+
+        if (isIOS()) {
+          alert(
+            "Para salvar o App no iPhone:\\n\\n" +
+            "1. Toque no botão Compartilhar do Safari.\\n" +
+            "2. Escolha “Adicionar à Tela de Início”.\\n" +
+            "3. Confirme em “Adicionar”."
+          );
+          return;
+        }
+
+        alert(
+          "Se a janela automática não aparecer:\\n\\n" +
+          "1. Abra o menu ⋮ do Chrome.\\n" +
+          "2. Toque em “Adicionar à tela inicial” ou “Instalar app”.\\n" +
+          "3. Confirme.\\n\\n" +
+          "Depois o Lista de Louvores ICM ficará com um ícone na tela do celular."
+        );
+      }
+
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        updateInstallButton();
+      });
+
+      window.addEventListener("appinstalled", () => {
+        deferredInstallPrompt = null;
+        updateInstallButton();
+        showToast("App salvo na tela inicial.");
+      });
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./sw.js").catch((error) => {
+            console.warn("Service Worker não registrado:", error);
+          });
+        });
+      }
+
+      els.installAppBtn.addEventListener("click", installApp);
+      updateInstallButton();
 
       els.searchInput.addEventListener("input", () => {
         clearTimeout(searchTimer);
