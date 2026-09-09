@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0f5132" />
+  <meta name="theme-color" content="#a62525" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -19,20 +19,20 @@
 
   <style>
     :root{
-      --bg:#f4f7f6;
+      --bg:#fbf7f7;
       --card:#ffffff;
-      --text:#16211c;
-      --muted:#66736c;
-      --line:#dce4df;
-      --green:#0f5132;
-      --green2:#157347;
-      --green3:#e8f3ed;
-      --blue:#24567f;
-      --red:#b42318;
-      --redbg:#fff0ee;
-      --amber:#8a5a00;
-      --amberbg:#fff7df;
-      --shadow:0 5px 18px rgba(17, 36, 28, .08);
+      --text:#2a1f1f;
+      --muted:#756060;
+      --line:#ead6d6;
+      --green:#a62525;
+      --green2:#8f1f1f;
+      --green3:#f7e8e8;
+      --blue:#a62525;
+      --red:#7f1d1d;
+      --redbg:#fbeaea;
+      --amber:#7f2b2b;
+      --amberbg:#f9eded;
+      --shadow:0 5px 18px rgba(92, 28, 28, .09);
       --radius:16px;
     }
 
@@ -185,9 +185,9 @@
 
     .btn-primary{background:var(--green);color:#fff}
     .btn-primary:hover{background:var(--green2)}
-    .btn-secondary{background:#edf1ef;color:#223129}
+    .btn-secondary{background:#f4eaea;color:#5f2929}
     .btn-danger{background:var(--redbg);color:var(--red)}
-    .btn-blue{background:#eaf1f7;color:var(--blue)}
+    .btn-blue{background:#f4e3e3;color:var(--blue)}
 
     .checkline{
       display:flex;
@@ -254,8 +254,8 @@
       min-height:24px;
       padding:3px 8px;
       border-radius:999px;
-      background:#f0f3f1;
-      color:#526058;
+      background:#f5eaea;
+      color:#6b3b3b;
       font-size:11px;
       font-weight:700;
     }
@@ -305,7 +305,7 @@
       width:31px;height:31px;
       border-radius:9px;
       display:grid;place-items:center;
-      background:#edf2ef;
+      background:#f4eaea;
       font-size:12px;
       font-weight:800;
       color:#536159;
@@ -337,8 +337,8 @@
       font-size:12px;
       border:1px solid var(--line);
       border-radius:10px;
-      background:#f8faf9;
-      color:#334139;
+      background:#fffafa;
+      color:#5d3434;
       font-weight:750;
       cursor:pointer;
     }
@@ -555,6 +555,10 @@
         <button id="sharePdfBtn" class="btn btn-primary" type="button">
           Compartilhar PDF
         </button>
+        <button id="printBtn" class="btn btn-primary wide" type="button" disabled
+          title="Impressão térmica será habilitada em uma próxima etapa">
+          Imprimir
+        </button>
         <button id="clearListBtn" class="btn btn-danger" type="button">
           Limpar lista
         </button>
@@ -566,12 +570,12 @@
       <div class="notice">
         <strong>Salvar PDF</strong> baixa a lista no celular. <strong>Compartilhar PDF</strong> abre
         o menu de compartilhamento do aparelho para escolher WhatsApp e outros aplicativos.
-        Se o navegador não permitir compartilhar arquivos diretamente, o PDF será salvo para envio manual.
+        O botão <strong>Imprimir</strong> ficará desativado até integrarmos a impressora térmica.
       </div>
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.2.0 • Lista de Louvores ICM
+      v1.3.0 • Lista de Louvores ICM
     </p>
   </main>
 
@@ -1326,7 +1330,11 @@
       els.sharePdfBtn.addEventListener("click", sharePdf);
       els.retryBtn.addEventListener("click", loadAll);
 
-      restoreLocal();
+      // Ao abrir ou recarregar o aplicativo, sempre iniciar uma lista nova.
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (_) {}
+      worshipList = [];
       renderList();
       loadAll();
     })();
