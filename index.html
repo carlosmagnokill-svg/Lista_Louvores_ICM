@@ -443,6 +443,51 @@
       transform:translateX(-50%) translateY(0);
     }
 
+    .ios-guide{
+      position:fixed;
+      inset:0;
+      z-index:1300;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background:rgba(42,31,31,.58);
+    }
+
+    .ios-guide.show{display:flex}
+
+    .ios-guide-box{
+      width:min(100%, 410px);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 18px 45px rgba(69,21,21,.22);
+    }
+
+    .ios-guide-box h3{
+      margin:0 0 8px;
+      color:var(--green);
+      font-size:18px;
+    }
+
+    .ios-guide-box p{
+      margin:0 0 12px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .ios-steps{
+      margin:0 0 14px;
+      padding-left:22px;
+      color:var(--text);
+      font-size:14px;
+      line-height:1.55;
+    }
+
+    .ios-guide-box .btn{width:100%}
+
     @media (max-width:520px){
       .install-card{grid-template-columns:1fr}
       .install-card .btn{width:100%}
@@ -575,9 +620,23 @@
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.3.0 • Lista de Louvores ICM
+      v1.3.1 • Lista de Louvores ICM
     </p>
   </main>
+
+  <div id="iosGuide" class="ios-guide" role="dialog" aria-modal="true" aria-labelledby="iosGuideTitle">
+    <div class="ios-guide-box">
+      <h3 id="iosGuideTitle">Salvar o App no iPhone/iPad</h3>
+      <p>Você está acessando pelo iOS/iPadOS. Para colocar o Lista de Louvores ICM na tela inicial:</p>
+      <ol class="ios-steps">
+        <li>Abra esta página no <strong>Safari</strong>.</li>
+        <li>Toque em <strong>Compartilhar</strong> (quadrado com seta para cima).</li>
+        <li>Escolha <strong>Adicionar à Tela de Início</strong>.</li>
+        <li>Toque em <strong>Adicionar</strong>.</li>
+      </ol>
+      <button id="iosGuideClose" class="btn btn-primary" type="button">Entendi</button>
+    </div>
+  </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
@@ -603,6 +662,8 @@
         baseStatus: $("baseStatus"),
         installAppBtn: $("installAppBtn"),
         installHint: $("installHint"),
+        iosGuide: $("iosGuide"),
+        iosGuideClose: $("iosGuideClose"),
         searchInput: $("searchInput"),
         clearSearchBtn: $("clearSearchBtn"),
         titleOnly: $("titleOnly"),
@@ -770,6 +831,7 @@
           setTimeout(() => {
             els.loading.style.display = "none";
             els.searchInput.focus();
+            showIOSGuideIfNeeded();
           }, 250);
 
         } catch (error) {
@@ -1202,7 +1264,17 @@
       }
 
       function isIOS() {
-        return /iphone|ipad|ipod/i.test(navigator.userAgent);
+        const ua = navigator.userAgent || "";
+        const classicIOS = /iphone|ipad|ipod/i.test(ua);
+        const ipadOSDesktopMode =
+          navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+        return classicIOS || ipadOSDesktopMode;
+      }
+
+      function showIOSGuideIfNeeded() {
+        if (isIOS() && !isStandaloneMode()) {
+          els.iosGuide.classList.add("show");
+        }
       }
 
       function updateInstallButton() {
@@ -1293,6 +1365,9 @@
       }
 
       els.installAppBtn.addEventListener("click", installApp);
+      els.iosGuideClose.addEventListener("click", () => {
+        els.iosGuide.classList.remove("show");
+      });
       updateInstallButton();
 
       els.searchInput.addEventListener("input", () => {
