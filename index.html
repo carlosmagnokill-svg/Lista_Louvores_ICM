@@ -296,9 +296,43 @@
 
     .song-head{
       display:grid;
-      grid-template-columns:auto 1fr;
+      grid-template-columns:auto 1fr auto;
       gap:9px;
-      align-items:start;
+      align-items:center;
+    }
+
+    .reorder{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      flex:0 0 auto;
+    }
+
+    .arrow-btn{
+      width:38px;
+      height:34px;
+      min-height:34px;
+      border:1px solid #dfbcbc;
+      border-radius:9px;
+      background:#f9eded;
+      color:var(--green);
+      font-size:19px;
+      font-weight:900;
+      line-height:1;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+
+    .arrow-btn:active{
+      transform:translateY(1px);
+    }
+
+    .arrow-btn:disabled{
+      opacity:.22;
+      cursor:not-allowed;
+      transform:none;
     }
 
     .order{
@@ -326,9 +360,11 @@
 
     .song-actions{
       display:grid;
-      grid-template-columns:repeat(4, 1fr);
+      grid-template-columns:1fr 1fr;
       gap:7px;
       margin-top:10px;
+      margin-left:40px;
+      margin-right:47px;
     }
 
     .mini{
@@ -493,7 +529,7 @@
       .install-card .btn{width:100%}
       .search-row,.manual-row{grid-template-columns:1fr}
       .search-row .btn,.manual-row .btn{width:100%}
-      .song-actions{grid-template-columns:1fr 1fr}
+      .song-actions{grid-template-columns:1fr 1fr;margin-left:0;margin-right:0}
       .footer-actions{grid-template-columns:1fr}
       .footer-actions .wide{grid-column:auto}
     }
@@ -620,19 +656,22 @@
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.3.1 • Lista de Louvores ICM
+      v1.3.3 • Lista de Louvores ICM
     </p>
   </main>
 
   <div id="iosGuide" class="ios-guide" role="dialog" aria-modal="true" aria-labelledby="iosGuideTitle">
     <div class="ios-guide-box">
       <h3 id="iosGuideTitle">Salvar o App no iPhone/iPad</h3>
-      <p>Você está acessando pelo iOS/iPadOS. Para colocar o Lista de Louvores ICM na tela inicial:</p>
+      <p>Você está acessando pelo iOS/iPadOS. Para salvar o Lista de Louvores ICM na tela inicial:</p>
       <ol class="ios-steps">
-        <li>Abra esta página no <strong>Safari</strong>.</li>
-        <li>Toque em <strong>Compartilhar</strong> (quadrado com seta para cima).</li>
+        <li>Procure e toque no ícone <strong>Compartilhar</strong> — um quadrado com uma seta para cima.</li>
+        <li>Na tela de compartilhamento, abaixo dos aplicativos, localize as opções <strong>Copiar</strong>, <strong>Adicionar à Lista de Leitura</strong>, <strong>Adicionar Favorito a...</strong> e <strong>Ver mais</strong>.</li>
+        <li>Toque em <strong>Ver mais</strong>.</li>
         <li>Escolha <strong>Adicionar à Tela de Início</strong>.</li>
-        <li>Toque em <strong>Adicionar</strong>.</li>
+        <li>Escolha o nome do atalho ou deixe <strong>Louvores ICM</strong>.</li>
+        <li>Deixe marcada a opção <strong>Abrir como app web</strong>.</li>
+        <li>Confirme para adicionar à tela de início.</li>
       </ol>
       <button id="iosGuideClose" class="btn btn-primary" type="button">Entendi</button>
     </div>
@@ -1038,15 +1077,31 @@
           div.innerHTML = `
             <div class="song-head">
               <div class="order">${String(index + 1).padStart(2, "0")}</div>
+
               <div class="song-name">
                 <span class="song-number">${escapeHtml(song.number)}</span>
                 - ${escapeHtml(song.title)}
               </div>
+
+              <div class="reorder" aria-label="Alterar posição do louvor">
+                <button
+                  class="arrow-btn up"
+                  type="button"
+                  aria-label="Mover louvor para cima"
+                  title="Mover para cima"
+                  ${index === 0 ? "disabled" : ""}
+                >↑</button>
+                <button
+                  class="arrow-btn down"
+                  type="button"
+                  aria-label="Mover louvor para baixo"
+                  title="Mover para baixo"
+                  ${index === count - 1 ? "disabled" : ""}
+                >↓</button>
+              </div>
             </div>
 
             <div class="song-actions">
-              <button class="mini up" type="button" ${index === 0 ? "disabled" : ""}>↑ Subir</button>
-              <button class="mini down" type="button" ${index === count - 1 ? "disabled" : ""}>↓ Descer</button>
               <button class="mini edit" type="button">Editar</button>
               <button class="mini delete" type="button">Excluir</button>
             </div>
@@ -1293,7 +1348,7 @@
             "Toque no botão para adicionar o app à tela inicial do Android.";
         } else if (isIOS()) {
           els.installHint.textContent =
-            "No iPhone: toque em Compartilhar e depois em Adicionar à Tela de Início.";
+            "No iPhone/iPad: toque em Compartilhar, depois em Ver mais e Adicionar à Tela de Início.";
         } else {
           els.installHint.textContent =
             "Cria um atalho na tela inicial. Não usa APK nem Play Store.";
@@ -1327,10 +1382,13 @@
 
         if (isIOS()) {
           alert(
-            "Para salvar o App no iPhone:\\n\\n" +
-            "1. Toque no botão Compartilhar do Safari.\\n" +
-            "2. Escolha “Adicionar à Tela de Início”.\\n" +
-            "3. Confirme em “Adicionar”."
+            "Para salvar o App no iPhone/iPad:\\n\\n" +
+            "1. Toque no ícone Compartilhar (quadrado com seta para cima).\\n" +
+            "2. Abaixo dos aplicativos, toque em “Ver mais”.\\n" +
+            "3. Escolha “Adicionar à Tela de Início”.\\n" +
+            "4. Escolha o nome ou deixe “Louvores ICM”.\\n" +
+            "5. Deixe marcado “Abrir como app web”.\\n" +
+            "6. Confirme para adicionar."
           );
           return;
         }
