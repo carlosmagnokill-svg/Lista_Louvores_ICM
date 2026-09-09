@@ -1,1 +1,1048 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f5132" />
+  <title>Lista de Louvores ICM</title>
 
+  <!-- Leitura dos arquivos .xlsx -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#f4f7f6;
+      --card:#ffffff;
+      --text:#16211c;
+      --muted:#66736c;
+      --line:#dce4df;
+      --green:#0f5132;
+      --green2:#157347;
+      --green3:#e8f3ed;
+      --blue:#24567f;
+      --red:#b42318;
+      --redbg:#fff0ee;
+      --amber:#8a5a00;
+      --amberbg:#fff7df;
+      --shadow:0 5px 18px rgba(17, 36, 28, .08);
+      --radius:16px;
+    }
+
+    *{box-sizing:border-box}
+    html{-webkit-text-size-adjust:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    button,input{font:inherit}
+
+    .app{
+      width:min(100%, 760px);
+      margin:0 auto;
+      padding:14px 14px 40px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 2px 16px;
+    }
+
+    .logo{
+      width:44px;height:44px;
+      border-radius:50%;
+      display:grid;place-items:center;
+      background:var(--green);
+      color:#fff;
+      font-size:23px;
+      flex:0 0 auto;
+    }
+
+    .topbar h1{
+      font-size:20px;
+      line-height:1.15;
+      margin:0;
+    }
+
+    .topbar p{
+      margin:4px 0 0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:15px;
+      margin-bottom:14px;
+    }
+
+    .section-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+
+    .section-title h2{
+      margin:0;
+      font-size:16px;
+    }
+
+    .count{
+      font-size:12px;
+      font-weight:700;
+      color:var(--green);
+      background:var(--green3);
+      border-radius:999px;
+      padding:5px 9px;
+      white-space:nowrap;
+    }
+
+    label.field-label{
+      display:block;
+      font-size:13px;
+      font-weight:700;
+      margin:0 0 7px;
+    }
+
+    .search-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:8px;
+    }
+
+    input[type="search"], input[type="text"]{
+      width:100%;
+      min-height:46px;
+      border:1px solid #b8c5bd;
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:16px;
+      color:var(--text);
+      background:#fff;
+      outline:none;
+    }
+
+    input:focus{
+      border-color:var(--green2);
+      box-shadow:0 0 0 3px rgba(21,115,71,.12);
+    }
+
+    .btn{
+      min-height:44px;
+      border:0;
+      border-radius:11px;
+      padding:9px 13px;
+      font-weight:750;
+      cursor:pointer;
+      transition:.15s ease;
+      touch-action:manipulation;
+    }
+
+    .btn:active{transform:translateY(1px)}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+
+    .btn-primary{background:var(--green);color:#fff}
+    .btn-primary:hover{background:var(--green2)}
+    .btn-secondary{background:#edf1ef;color:#223129}
+    .btn-danger{background:var(--redbg);color:var(--red)}
+    .btn-blue{background:#eaf1f7;color:var(--blue)}
+
+    .checkline{
+      display:flex;
+      align-items:center;
+      gap:9px;
+      min-height:44px;
+      margin-top:8px;
+      font-size:14px;
+      user-select:none;
+    }
+
+    .checkline input{
+      width:20px;height:20px;
+      accent-color:var(--green);
+    }
+
+    .hint{
+      margin:7px 0 0;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .status{
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .results{
+      display:grid;
+      gap:8px;
+      margin-top:10px;
+    }
+
+    .result{
+      border:1px solid var(--line);
+      border-radius:13px;
+      padding:11px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+
+    .result-main{min-width:0}
+    .result-title{
+      font-weight:800;
+      font-size:14px;
+      line-height:1.3;
+      overflow-wrap:anywhere;
+    }
+
+    .result-meta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      margin-top:6px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      min-height:24px;
+      padding:3px 8px;
+      border-radius:999px;
+      background:#f0f3f1;
+      color:#526058;
+      font-size:11px;
+      font-weight:700;
+    }
+
+    .pill.num{
+      background:var(--green3);
+      color:var(--green);
+      font-size:12px;
+    }
+
+    .manual-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:8px;
+    }
+
+    .list{
+      display:grid;
+      gap:9px;
+      margin-top:10px;
+    }
+
+    .empty{
+      text-align:center;
+      padding:22px 12px;
+      border:1px dashed #bdc8c1;
+      border-radius:13px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .song{
+      border:1px solid var(--line);
+      border-radius:13px;
+      padding:11px;
+      background:#fff;
+    }
+
+    .song-head{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:9px;
+      align-items:start;
+    }
+
+    .order{
+      width:31px;height:31px;
+      border-radius:9px;
+      display:grid;place-items:center;
+      background:#edf2ef;
+      font-size:12px;
+      font-weight:800;
+      color:#536159;
+    }
+
+    .song-name{
+      font-weight:800;
+      font-size:14px;
+      line-height:1.35;
+      overflow-wrap:anywhere;
+    }
+
+    .song-number{
+      color:var(--green);
+      margin-right:5px;
+      white-space:nowrap;
+    }
+
+    .song-actions{
+      display:grid;
+      grid-template-columns:repeat(4, 1fr);
+      gap:7px;
+      margin-top:10px;
+    }
+
+    .mini{
+      min-height:39px;
+      padding:6px 8px;
+      font-size:12px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#f8faf9;
+      color:#334139;
+      font-weight:750;
+      cursor:pointer;
+    }
+
+    .mini.delete{
+      color:var(--red);
+      background:var(--redbg);
+      border-color:#f3c7c1;
+    }
+
+    .footer-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:12px;
+    }
+
+    .footer-actions .wide{grid-column:1/-1}
+
+    .notice{
+      background:var(--amberbg);
+      border:1px solid #f0d89a;
+      color:#664900;
+      border-radius:12px;
+      padding:10px 11px;
+      font-size:12px;
+      line-height:1.45;
+      margin-top:10px;
+    }
+
+    .loading{
+      position:fixed;
+      inset:0;
+      z-index:999;
+      background:rgba(245,248,246,.96);
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+
+    .loading-box{
+      width:min(100%, 340px);
+      text-align:center;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:25px 18px;
+      box-shadow:var(--shadow);
+    }
+
+    .spinner{
+      width:42px;height:42px;
+      margin:0 auto 14px;
+      border:4px solid #dbe6df;
+      border-top-color:var(--green);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    .loading-title{
+      font-size:18px;
+      font-weight:850;
+    }
+
+    .loading-sub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .load-error{
+      display:none;
+      margin-top:12px;
+      color:var(--red);
+      font-size:13px;
+      line-height:1.4;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:22px;
+      transform:translateX(-50%) translateY(18px);
+      width:min(calc(100% - 28px), 520px);
+      background:#1e2a24;
+      color:#fff;
+      border-radius:12px;
+      padding:11px 13px;
+      text-align:center;
+      font-size:13px;
+      font-weight:700;
+      opacity:0;
+      pointer-events:none;
+      transition:.2s ease;
+      z-index:1200;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    @media (max-width:520px){
+      .search-row,.manual-row{grid-template-columns:1fr}
+      .search-row .btn,.manual-row .btn{width:100%}
+      .song-actions{grid-template-columns:1fr 1fr}
+      .footer-actions{grid-template-columns:1fr}
+      .footer-actions .wide{grid-column:auto}
+    }
+
+    @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loading" class="loading" aria-live="polite">
+    <div class="loading-box">
+      <div class="spinner" aria-hidden="true"></div>
+      <div class="loading-title">Carregando Louvores...</div>
+      <div id="loadingSub" class="loading-sub">Lendo as coletâneas.</div>
+      <div id="loadError" class="load-error"></div>
+      <button id="retryBtn" class="btn btn-primary" type="button" style="display:none;margin-top:14px;width:100%">
+        Tentar novamente
+      </button>
+    </div>
+  </div>
+
+  <main class="app">
+    <header class="topbar">
+      <div class="logo" aria-hidden="true">♫</div>
+      <div>
+        <h1>Lista de Louvores ICM</h1>
+        <p id="baseStatus">Preparando coletâneas...</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Buscar louvor</h2>
+        <span id="resultCount" class="count">0 resultados</span>
+      </div>
+
+      <label class="field-label" for="searchInput">Número, título ou trecho da letra</label>
+      <div class="search-row">
+        <input
+          id="searchInput"
+          type="search"
+          autocomplete="off"
+          placeholder="Ex.: 534, Jerusalém, sangue..."
+          aria-label="Buscar louvor"
+        />
+        <button id="clearSearchBtn" class="btn btn-secondary" type="button">Limpar</button>
+      </div>
+
+      <label class="checkline">
+        <input id="titleOnly" type="checkbox" />
+        <span>Procurar somente em Títulos</span>
+      </label>
+
+      <p class="hint">
+        A busca por número continua funcionando mesmo com a opção acima marcada.
+      </p>
+
+      <div id="searchStatus" class="status">Digite algo para pesquisar.</div>
+      <div id="results" class="results"></div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Louvor não cadastrado</h2>
+        <span class="count">entra como AV</span>
+      </div>
+
+      <label class="field-label" for="manualInput">Nome do louvor</label>
+      <div class="manual-row">
+        <input
+          id="manualInput"
+          type="text"
+          autocomplete="off"
+          placeholder="Digite o nome do louvor"
+        />
+        <button id="manualAddBtn" class="btn btn-primary" type="button">Adicionar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Lista do culto</h2>
+        <span id="listCount" class="count">0 louvores</span>
+      </div>
+
+      <div id="list" class="list"></div>
+
+      <div class="footer-actions">
+        <button id="savePhoneBtn" class="btn btn-blue wide" type="button">
+          Salvar no celular
+        </button>
+        <button id="clearListBtn" class="btn btn-danger" type="button">
+          Limpar lista
+        </button>
+        <button id="newListBtn" class="btn btn-secondary" type="button">
+          Nova lista
+        </button>
+      </div>
+
+      <div class="notice">
+        Nesta primeira versão, <strong>Salvar no celular</strong> gera um arquivo de texto (.txt)
+        com a lista. PDF, compartilhamento pelo WhatsApp e impressão térmica entram na próxima etapa.
+      </div>
+    </section>
+
+    <p class="hint" style="text-align:center;margin-top:18px">
+      v1.0.0 • Lista de Louvores ICM
+    </p>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const FILES = [
+        { file: "Coletânea Padrão.xlsx", collection: "Padrão", avulso: false },
+        { file: "Coletânea Cias.xlsx", collection: "Cias", avulso: false },
+        { file: "Coletânea Avulsos.xlsx", collection: "Avulsos", avulso: true }
+      ];
+
+      const STORAGE_KEY = "lista_louvores_icm_v1";
+
+      const $ = (id) => document.getElementById(id);
+
+      const els = {
+        loading: $("loading"),
+        loadingSub: $("loadingSub"),
+        loadError: $("loadError"),
+        retryBtn: $("retryBtn"),
+        baseStatus: $("baseStatus"),
+        searchInput: $("searchInput"),
+        clearSearchBtn: $("clearSearchBtn"),
+        titleOnly: $("titleOnly"),
+        searchStatus: $("searchStatus"),
+        results: $("results"),
+        resultCount: $("resultCount"),
+        manualInput: $("manualInput"),
+        manualAddBtn: $("manualAddBtn"),
+        list: $("list"),
+        listCount: $("listCount"),
+        savePhoneBtn: $("savePhoneBtn"),
+        clearListBtn: $("clearListBtn"),
+        newListBtn: $("newListBtn"),
+        toast: $("toast")
+      };
+
+      let songs = [];
+      let worshipList = [];
+      let toastTimer = null;
+      let searchTimer = null;
+
+      function normalizeText(value) {
+        return String(value ?? "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toUpperCase()
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
+      function normalizeNumber(value) {
+        const s = String(value ?? "").trim();
+        if (!/^\d+$/.test(s)) return null;
+        return String(parseInt(s, 10));
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        els.toast.textContent = message;
+        els.toast.classList.add("show");
+        toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2200);
+      }
+
+      function saveLocal() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(worshipList));
+        } catch (_) {}
+      }
+
+      function restoreLocal() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+          if (Array.isArray(saved)) {
+            worshipList = saved
+              .filter(x => x && typeof x.title === "string")
+              .map(x => ({
+                id: x.id || cryptoSafeId(),
+                number: String(x.number || "AV"),
+                title: String(x.title || "").trim(),
+                collection: String(x.collection || "Lista")
+              }))
+              .filter(x => x.title);
+          }
+        } catch (_) {
+          worshipList = [];
+        }
+      }
+
+      function cryptoSafeId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+        return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
+      }
+
+      async function loadWorkbook(item) {
+        const cacheBuster = "v=" + Date.now();
+        const url = encodeURI(item.file) + "?" + cacheBuster;
+
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Não foi possível abrir " + item.file + " (" + response.status + ").");
+        }
+
+        const buffer = await response.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        const rows = XLSX.utils.sheet_to_json(firstSheet, {
+          header: 1,
+          defval: "",
+          raw: false
+        });
+
+        if (!rows.length) return [];
+
+        const header = rows[0].map(v => normalizeText(v));
+        const numberIndex = header.findIndex(v => v === "NUMERO");
+        const titleIndex = header.findIndex(v => v === "TITULO");
+        const textIndex = header.findIndex(v => v === "TEXTO");
+
+        if (numberIndex < 0 || titleIndex < 0 || textIndex < 0) {
+          throw new Error(
+            item.file + " precisa ter as colunas Número, Título e Texto."
+          );
+        }
+
+        return rows.slice(1).map((row, idx) => {
+          const number = item.avulso
+            ? "AV"
+            : String(row[numberIndex] ?? "").trim();
+
+          const title = String(row[titleIndex] ?? "").trim();
+          const text = String(row[textIndex] ?? "").trim();
+
+          if (!title) return null;
+
+          return {
+            key: item.collection + "-" + idx + "-" + number + "-" + title,
+            number,
+            title,
+            text,
+            collection: item.collection,
+            nNumber: normalizeNumber(number),
+            nTitle: normalizeText(title),
+            nText: normalizeText(text)
+          };
+        }).filter(Boolean);
+      }
+
+      async function loadAll() {
+        els.loading.style.display = "grid";
+        els.loadError.style.display = "none";
+        els.retryBtn.style.display = "none";
+        els.loadingSub.textContent = "Lendo as coletâneas.";
+        songs = [];
+
+        try {
+          if (typeof XLSX === "undefined") {
+            throw new Error("A biblioteca de leitura do Excel não foi carregada.");
+          }
+
+          for (let i = 0; i < FILES.length; i++) {
+            const item = FILES[i];
+            els.loadingSub.textContent = "Carregando " + item.collection + "...";
+            const loaded = await loadWorkbook(item);
+            songs.push(...loaded);
+          }
+
+          els.baseStatus.textContent =
+            songs.length.toLocaleString("pt-BR") + " louvores carregados";
+
+          els.loadingSub.textContent = "Coletâneas carregadas.";
+          setTimeout(() => {
+            els.loading.style.display = "none";
+            els.searchInput.focus();
+          }, 250);
+
+        } catch (error) {
+          console.error(error);
+          els.loadError.textContent = error.message || "Erro ao carregar as coletâneas.";
+          els.loadError.style.display = "block";
+          els.retryBtn.style.display = "inline-block";
+          els.loadingSub.textContent = "Falha no carregamento.";
+        }
+      }
+
+      function scoreSong(song, queryNorm, queryNumber, titleOnly) {
+        let score = -1;
+
+        if (queryNumber !== null && song.nNumber === queryNumber) {
+          score = 1000;
+        }
+
+        if (song.nTitle === queryNorm) {
+          score = Math.max(score, 900);
+        } else if (song.nTitle.startsWith(queryNorm)) {
+          score = Math.max(score, 800);
+        } else if (song.nTitle.includes(queryNorm)) {
+          score = Math.max(score, 700);
+        }
+
+        if (!titleOnly && song.nText.includes(queryNorm)) {
+          score = Math.max(score, 500);
+        }
+
+        return score;
+      }
+
+      function runSearch() {
+        const raw = els.searchInput.value.trim();
+        const query = normalizeText(raw);
+        const titleOnly = els.titleOnly.checked;
+
+        els.results.innerHTML = "";
+
+        if (!query) {
+          els.resultCount.textContent = "0 resultados";
+          els.searchStatus.textContent = "Digite algo para pesquisar.";
+          return;
+        }
+
+        const queryNumber = normalizeNumber(raw);
+
+        const found = songs
+          .map(song => ({
+            song,
+            score: scoreSong(song, query, queryNumber, titleOnly)
+          }))
+          .filter(x => x.score >= 0)
+          .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return a.song.title.localeCompare(b.song.title, "pt-BR");
+          });
+
+        els.resultCount.textContent =
+          found.length + (found.length === 1 ? " resultado" : " resultados");
+
+        if (!found.length) {
+          els.searchStatus.textContent = "Nenhum louvor encontrado.";
+          return;
+        }
+
+        const LIMIT = 40;
+        const visible = found.slice(0, LIMIT);
+
+        els.searchStatus.textContent =
+          found.length > LIMIT
+            ? "Mostrando os primeiros " + LIMIT + " resultados."
+            : "Resultado da busca:";
+
+        const fragment = document.createDocumentFragment();
+
+        visible.forEach(({ song }) => {
+          const div = document.createElement("div");
+          div.className = "result";
+
+          div.innerHTML = `
+            <div class="result-main">
+              <div class="result-title">
+                <span class="song-number">${escapeHtml(song.number)}</span>
+                - ${escapeHtml(song.title)}
+              </div>
+              <div class="result-meta">
+                <span class="pill">${escapeHtml(song.collection)}</span>
+              </div>
+            </div>
+            <button class="btn btn-primary add-result" type="button">Inserir</button>
+          `;
+
+          div.querySelector(".add-result").addEventListener("click", () => {
+            addSong({
+              number: song.collection === "Avulsos" ? "AV" : song.number,
+              title: song.title,
+              collection: song.collection
+            });
+          });
+
+          fragment.appendChild(div);
+        });
+
+        els.results.appendChild(fragment);
+      }
+
+      function addSong(song) {
+        worshipList.push({
+          id: cryptoSafeId(),
+          number: String(song.number || "AV"),
+          title: String(song.title || "").trim(),
+          collection: String(song.collection || "Lista")
+        });
+
+        saveLocal();
+        renderList();
+        showToast("Louvor inserido na lista.");
+      }
+
+      function addManual() {
+        const title = els.manualInput.value.trim();
+        if (!title) {
+          els.manualInput.focus();
+          showToast("Digite o nome do louvor.");
+          return;
+        }
+
+        addSong({
+          number: "AV",
+          title,
+          collection: "Manual"
+        });
+
+        els.manualInput.value = "";
+        els.manualInput.focus();
+      }
+
+      function moveItem(index, direction) {
+        const target = index + direction;
+        if (target < 0 || target >= worshipList.length) return;
+
+        const [item] = worshipList.splice(index, 1);
+        worshipList.splice(target, 0, item);
+        saveLocal();
+        renderList();
+      }
+
+      function editItem(index) {
+        const current = worshipList[index];
+        if (!current) return;
+
+        const updated = prompt("Editar título do louvor:", current.title);
+        if (updated === null) return;
+
+        const title = updated.trim();
+        if (!title) {
+          showToast("O título não pode ficar vazio.");
+          return;
+        }
+
+        current.title = title;
+        saveLocal();
+        renderList();
+        showToast("Louvor atualizado.");
+      }
+
+      function deleteItem(index) {
+        worshipList.splice(index, 1);
+        saveLocal();
+        renderList();
+        showToast("Louvor removido.");
+      }
+
+      function renderList() {
+        els.list.innerHTML = "";
+
+        const count = worshipList.length;
+        els.listCount.textContent =
+          count + (count === 1 ? " louvor" : " louvores");
+
+        els.savePhoneBtn.disabled = count === 0;
+        els.clearListBtn.disabled = count === 0;
+        els.newListBtn.disabled = count === 0;
+
+        if (!count) {
+          els.list.innerHTML = `
+            <div class="empty">
+              Nenhum louvor inserido.<br>
+              Pesquise acima e toque em <strong>Inserir</strong>.
+            </div>
+          `;
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+
+        worshipList.forEach((song, index) => {
+          const div = document.createElement("div");
+          div.className = "song";
+
+          div.innerHTML = `
+            <div class="song-head">
+              <div class="order">${String(index + 1).padStart(2, "0")}</div>
+              <div class="song-name">
+                <span class="song-number">${escapeHtml(song.number)}</span>
+                - ${escapeHtml(song.title)}
+              </div>
+            </div>
+
+            <div class="song-actions">
+              <button class="mini up" type="button" ${index === 0 ? "disabled" : ""}>↑ Subir</button>
+              <button class="mini down" type="button" ${index === count - 1 ? "disabled" : ""}>↓ Descer</button>
+              <button class="mini edit" type="button">Editar</button>
+              <button class="mini delete" type="button">Excluir</button>
+            </div>
+          `;
+
+          div.querySelector(".up").addEventListener("click", () => moveItem(index, -1));
+          div.querySelector(".down").addEventListener("click", () => moveItem(index, 1));
+          div.querySelector(".edit").addEventListener("click", () => editItem(index));
+          div.querySelector(".delete").addEventListener("click", () => deleteItem(index));
+
+          fragment.appendChild(div);
+        });
+
+        els.list.appendChild(fragment);
+      }
+
+      function clearList(ask = true) {
+        if (!worshipList.length) return;
+        if (ask && !confirm("Deseja realmente limpar toda a lista?")) return;
+
+        worshipList = [];
+        saveLocal();
+        renderList();
+        showToast("Lista limpa.");
+      }
+
+      function newList() {
+        if (!worshipList.length) return;
+        if (!confirm("Iniciar uma nova lista? A lista atual será apagada.")) return;
+
+        worshipList = [];
+        saveLocal();
+        renderList();
+        els.searchInput.value = "";
+        runSearch();
+        els.searchInput.focus();
+        showToast("Nova lista iniciada.");
+      }
+
+      function saveOnPhone() {
+        if (!worshipList.length) return;
+
+        const now = new Date();
+        const date = now.toLocaleDateString("pt-BR");
+
+        const lines = [
+          "LISTA DE LOUVORES",
+          "Data: " + date,
+          "",
+          ...worshipList.map((song, i) =>
+            String(i + 1).padStart(2, "0") + ". " + song.number + " - " + song.title
+          ),
+          "",
+          "Total: " + worshipList.length + " louvores"
+        ];
+
+        const blob = new Blob([lines.join("\r\n")], {
+          type: "text/plain;charset=utf-8"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        const stamp =
+          now.getFullYear() +
+          "-" + String(now.getMonth() + 1).padStart(2, "0") +
+          "-" + String(now.getDate()).padStart(2, "0");
+
+        a.href = url;
+        a.download = "Lista_Louvores_" + stamp + ".txt";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast("Lista salva no celular.");
+      }
+
+      els.searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(runSearch, 120);
+      });
+
+      els.searchInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          runSearch();
+        }
+      });
+
+      els.titleOnly.addEventListener("change", runSearch);
+
+      els.clearSearchBtn.addEventListener("click", () => {
+        els.searchInput.value = "";
+        runSearch();
+        els.searchInput.focus();
+      });
+
+      els.manualAddBtn.addEventListener("click", addManual);
+
+      els.manualInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addManual();
+        }
+      });
+
+      els.clearListBtn.addEventListener("click", () => clearList(true));
+      els.newListBtn.addEventListener("click", newList);
+      els.savePhoneBtn.addEventListener("click", saveOnPhone);
+      els.retryBtn.addEventListener("click", loadAll);
+
+      restoreLocal();
+      renderList();
+      loadAll();
+    })();
+  </script>
+</body>
+</html>
