@@ -309,9 +309,9 @@
     }
 
     .arrow-btn{
-      width:38px;
-      height:34px;
-      min-height:34px;
+      width:44px;
+      height:44px;
+      min-height:44px;
       border:1px solid #dfbcbc;
       border-radius:9px;
       background:#f9eded;
@@ -323,6 +323,9 @@
       place-items:center;
       cursor:pointer;
       touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+      -webkit-user-select:none;
+      user-select:none;
     }
 
     .arrow-btn:active{
@@ -656,7 +659,7 @@
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.3.3 • Lista de Louvores ICM
+      v1.3.4 • Lista de Louvores ICM
     </p>
   </main>
 
@@ -1020,6 +1023,47 @@
         renderList();
       }
 
+      let lastReorderPointerAt = 0;
+
+      function handleReorderButton(button) {
+        if (!button || button.disabled) return;
+
+        const songId = button.dataset.songId;
+        const direction = Number(button.dataset.direction);
+        const currentIndex = worshipList.findIndex(song => song.id === songId);
+
+        if (currentIndex < 0 || ![-1, 1].includes(direction)) return;
+
+        moveItem(currentIndex, direction);
+      }
+
+      // No celular, executa já no fim do toque (pointerup), sem depender
+      // do "click" posterior do navegador. Isso deixa a resposta imediata.
+      els.list.addEventListener("pointerup", (event) => {
+        const button = event.target.closest(".arrow-btn");
+        if (!button || !els.list.contains(button) || button.disabled) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        lastReorderPointerAt = Date.now();
+        handleReorderButton(button);
+      });
+
+      // Mantém compatibilidade com teclado e navegadores sem Pointer Events.
+      els.list.addEventListener("click", (event) => {
+        const button = event.target.closest(".arrow-btn");
+        if (!button || !els.list.contains(button) || button.disabled) return;
+
+        // Evita executar duas vezes quando o pointerup já tratou o mesmo toque.
+        if (Date.now() - lastReorderPointerAt < 700) {
+          event.preventDefault();
+          return;
+        }
+
+        handleReorderButton(button);
+      });
+
       function editItem(index) {
         const current = worshipList[index];
         if (!current) return;
@@ -1087,6 +1131,8 @@
                 <button
                   class="arrow-btn up"
                   type="button"
+                  data-song-id="${escapeHtml(song.id)}"
+                  data-direction="-1"
                   aria-label="Mover louvor para cima"
                   title="Mover para cima"
                   ${index === 0 ? "disabled" : ""}
@@ -1094,6 +1140,8 @@
                 <button
                   class="arrow-btn down"
                   type="button"
+                  data-song-id="${escapeHtml(song.id)}"
+                  data-direction="1"
                   aria-label="Mover louvor para baixo"
                   title="Mover para baixo"
                   ${index === count - 1 ? "disabled" : ""}
@@ -1107,8 +1155,6 @@
             </div>
           `;
 
-          div.querySelector(".up").addEventListener("click", () => moveItem(index, -1));
-          div.querySelector(".down").addEventListener("click", () => moveItem(index, 1));
           div.querySelector(".edit").addEventListener("click", () => editItem(index));
           div.querySelector(".delete").addEventListener("click", () => deleteItem(index));
 

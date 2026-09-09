@@ -1,4 +1,4 @@
-const CACHE_NAME = "lista-louvores-icm-v1.3.3";
+const CACHE_NAME = "lista-louvores-icm-v1.3.4";
 
 const CORE_FILES = [
   "./",
