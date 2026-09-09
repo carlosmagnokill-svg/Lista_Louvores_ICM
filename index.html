@@ -8,6 +8,8 @@
 
   <!-- Leitura dos arquivos .xlsx -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Geração de PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 
   <style>
     :root{
@@ -504,8 +506,11 @@
       <div id="list" class="list"></div>
 
       <div class="footer-actions">
-        <button id="savePhoneBtn" class="btn btn-blue wide" type="button">
-          Salvar no celular
+        <button id="savePdfBtn" class="btn btn-blue" type="button">
+          Salvar PDF
+        </button>
+        <button id="sharePdfBtn" class="btn btn-primary" type="button">
+          Compartilhar PDF
         </button>
         <button id="clearListBtn" class="btn btn-danger" type="button">
           Limpar lista
@@ -516,13 +521,14 @@
       </div>
 
       <div class="notice">
-        Nesta primeira versão, <strong>Salvar no celular</strong> gera um arquivo de texto (.txt)
-        com a lista. PDF, compartilhamento pelo WhatsApp e impressão térmica entram na próxima etapa.
+        <strong>Salvar PDF</strong> baixa a lista no celular. <strong>Compartilhar PDF</strong> abre
+        o menu de compartilhamento do aparelho para escolher WhatsApp e outros aplicativos.
+        Se o navegador não permitir compartilhar arquivos diretamente, o PDF será salvo para envio manual.
       </div>
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.0.0 • Lista de Louvores ICM
+      v1.1.0 • Lista de Louvores ICM
     </p>
   </main>
 
@@ -558,7 +564,8 @@
         manualAddBtn: $("manualAddBtn"),
         list: $("list"),
         listCount: $("listCount"),
-        savePhoneBtn: $("savePhoneBtn"),
+        savePdfBtn: $("savePdfBtn"),
+        sharePdfBtn: $("sharePdfBtn"),
         clearListBtn: $("clearListBtn"),
         newListBtn: $("newListBtn"),
         toast: $("toast")
@@ -895,7 +902,8 @@
         els.listCount.textContent =
           count + (count === 1 ? " louvor" : " louvores");
 
-        els.savePhoneBtn.disabled = count === 0;
+        els.savePdfBtn.disabled = count === 0;
+        els.sharePdfBtn.disabled = count === 0;
         els.clearListBtn.disabled = count === 0;
         els.newListBtn.disabled = count === 0;
 
@@ -966,43 +974,176 @@
         showToast("Nova lista iniciada.");
       }
 
-      function saveOnPhone() {
-        if (!worshipList.length) return;
+      function capitalizeFirst(value) {
+        const text = String(value || "");
+        return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+      }
 
+      function getDateInfo(date = new Date()) {
+        return {
+          date: date.toLocaleDateString("pt-BR"),
+          weekday: capitalizeFirst(
+            date.toLocaleDateString("pt-BR", { weekday: "long" })
+          )
+        };
+      }
+
+      function getPdfFileName(date = new Date()) {
+        const stamp =
+          date.getFullYear() +
+          "-" + String(date.getMonth() + 1).padStart(2, "0") +
+          "-" + String(date.getDate()).padStart(2, "0");
+        return "Lista_Louvores_" + stamp + ".pdf";
+      }
+
+      function createPdfBlob() {
+        if (!worshipList.length) return null;
+
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          throw new Error("A biblioteca de PDF não foi carregada.");
+        }
+
+        const { jsPDF } = window.jspdf;
         const now = new Date();
-        const date = now.toLocaleDateString("pt-BR");
+        const info = getDateInfo(now);
 
-        const lines = [
-          "LISTA DE LOUVORES",
-          "Data: " + date,
-          "",
-          ...worshipList.map((song, i) =>
-            String(i + 1).padStart(2, "0") + ". " + song.number + " - " + song.title
-          ),
-          "",
-          "Total: " + worshipList.length + " louvores"
-        ];
-
-        const blob = new Blob([lines.join("\r\n")], {
-          type: "text/plain;charset=utf-8"
+        // PDF em formato de cupom: 80 mm de largura.
+        const doc = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: [80, 297],
+          compress: true
         });
 
+        const marginX = 5;
+        const usableWidth = 70;
+        const bottomLimit = 286;
+        let y = 9;
+
+        function dottedLine() {
+          doc.setDrawColor(100);
+          doc.setLineWidth(0.25);
+          doc.setLineDashPattern([0.8, 0.8], 0);
+          doc.line(marginX, y, 80 - marginX, y);
+          doc.setLineDashPattern([], 0);
+          y += 4;
+        }
+
+        function newPageIfNeeded(requiredHeight = 10) {
+          if (y + requiredHeight <= bottomLimit) return;
+          doc.addPage([80, 297], "portrait");
+          y = 9;
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(8.5);
+          doc.text("LISTA DE LOUVORES - CONTINUAÇÃO", marginX, y);
+          y += 5;
+          dottedLine();
+        }
+
+        doc.setTextColor(20);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("LISTA DE LOUVORES", 40, y, { align: "center" });
+        y += 6;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text("Data: " + info.date + " - " + info.weekday, marginX, y);
+        y += 5;
+        dottedLine();
+
+        doc.setFontSize(9.2);
+
+        worshipList.forEach((song, index) => {
+          const prefix = String(index + 1).padStart(2, "0") + ". ";
+          const line = prefix + song.number + " - " + song.title;
+          const wrapped = doc.splitTextToSize(line, usableWidth);
+          const required = Math.max(5, wrapped.length * 4.2 + 1.5);
+
+          newPageIfNeeded(required);
+          doc.text(wrapped, marginX, y);
+          y += wrapped.length * 4.2 + 1.3;
+        });
+
+        newPageIfNeeded(12);
+        y += 1;
+        dottedLine();
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.text(
+          "Total: " + worshipList.length + (worshipList.length === 1 ? " louvor" : " louvores"),
+          marginX,
+          y
+        );
+
+        return {
+          blob: doc.output("blob"),
+          filename: getPdfFileName(now),
+          dateInfo: info
+        };
+      }
+
+      function downloadBlob(blob, filename) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-
-        const stamp =
-          now.getFullYear() +
-          "-" + String(now.getMonth() + 1).padStart(2, "0") +
-          "-" + String(now.getDate()).padStart(2, "0");
-
         a.href = url;
-        a.download = "Lista_Louvores_" + stamp + ".txt";
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1200);
+      }
 
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        showToast("Lista salva no celular.");
+      function savePdf() {
+        if (!worshipList.length) return;
+
+        try {
+          const pdf = createPdfBlob();
+          downloadBlob(pdf.blob, pdf.filename);
+          showToast("PDF salvo no celular.");
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || "Não foi possível gerar o PDF.");
+        }
+      }
+
+      async function sharePdf() {
+        if (!worshipList.length) return;
+
+        let pdf;
+        try {
+          pdf = createPdfBlob();
+        } catch (error) {
+          console.error(error);
+          showToast(error.message || "Não foi possível gerar o PDF.");
+          return;
+        }
+
+        const file = new File([pdf.blob], pdf.filename, { type: "application/pdf" });
+        const shareData = {
+          title: "Lista de Louvores",
+          text: "Lista de Louvores - " + pdf.dateInfo.date + " - " + pdf.dateInfo.weekday,
+          files: [file]
+        };
+
+        try {
+          const canShareFiles =
+            typeof navigator.share === "function" &&
+            (!navigator.canShare || navigator.canShare({ files: [file] }));
+
+          if (canShareFiles) {
+            await navigator.share(shareData);
+            return;
+          }
+
+          downloadBlob(pdf.blob, pdf.filename);
+          showToast("Seu navegador não compartilha PDF diretamente. O arquivo foi salvo.");
+        } catch (error) {
+          if (error && error.name === "AbortError") return;
+          console.error(error);
+          downloadBlob(pdf.blob, pdf.filename);
+          showToast("Não foi possível abrir o compartilhamento. O PDF foi salvo.");
+        }
       }
 
       els.searchInput.addEventListener("input", () => {
@@ -1036,7 +1177,8 @@
 
       els.clearListBtn.addEventListener("click", () => clearList(true));
       els.newListBtn.addEventListener("click", newList);
-      els.savePhoneBtn.addEventListener("click", saveOnPhone);
+      els.savePdfBtn.addEventListener("click", savePdf);
+      els.sharePdfBtn.addEventListener("click", sharePdf);
       els.retryBtn.addEventListener("click", loadAll);
 
       restoreLocal();
