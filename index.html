@@ -659,7 +659,7 @@
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.3.5 • Lista de Louvores ICM
+      v1.3.6 • Lista de Louvores ICM
     </p>
   </main>
 
@@ -1258,17 +1258,20 @@
         doc.setTextColor(20);
 
         // Cabeçalho ICM: logo preta centralizada.
-        // A arte original é horizontal; 62 mm preserva boa leitura em bobina de 80 mm.
-        const logoWidth = 62;
+        // A largura da logo acompanha a largura visual do texto "Igreja Cristã Maranata".
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10.5);
+        const churchName = "Igreja Cristã Maranata";
+        const logoWidth = Math.min(usableWidth, doc.getTextWidth(churchName));
         const logoHeight = logoWidth * (283 / 1324);
         const logoX = (80 - logoWidth) / 2;
         doc.addImage(ICM_LOGO_BLACK, "PNG", logoX, y, logoWidth, logoHeight);
         y += logoHeight + 3;
 
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(10.5);
-        doc.text("Igreja Cristã Maranata", 40, y, { align: "center" });
-        y += 5.5;
+        doc.text(churchName, 40, y, { align: "center" });
+
+        // Uma linha de respiro entre o nome da igreja e o título da lista.
+        y += 9.5;
 
         doc.setFontSize(11);
         doc.text("LISTA DE LOUVORES", 40, y, { align: "center" });
