@@ -659,7 +659,7 @@
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.3.7 • Lista de Louvores ICM
+      v1.3.8 • Lista de Louvores ICM
     </p>
   </main>
 
@@ -959,7 +959,7 @@
             <div class="result-main">
               <div class="result-title">
                 <span class="song-number">${escapeHtml(song.number)}</span>
-                - ${escapeHtml(song.title)}
+                - ${escapeHtml(getDisplayTitle(song))}
               </div>
               <div class="result-meta">
                 <span class="pill">${escapeHtml(song.collection)}</span>
@@ -974,12 +974,22 @@
               title: song.title,
               collection: song.collection
             });
+
+            // Após inserir, limpar a pesquisa para o próximo louvor.
+            els.searchInput.value = "";
+            runSearch();
+            els.searchInput.focus();
           });
 
           fragment.appendChild(div);
         });
 
         els.results.appendChild(fragment);
+      }
+
+      function getDisplayTitle(song) {
+        const title = String(song?.title || "").trim();
+        return song?.collection === "Cias" ? "(Cias) " + title : title;
       }
 
       function addSong(song) {
@@ -1288,7 +1298,7 @@
         // Não numerar a ordem da lista no PDF.
         // Mantemos apenas o número do louvor (ou AV) + título.
         worshipList.forEach((song) => {
-          const line = song.number + " - " + song.title;
+          const line = song.number + " - " + getDisplayTitle(song);
           const wrapped = doc.splitTextToSize(line, usableWidth);
           const required = Math.max(5, wrapped.length * 4.2 + 1.5);
 
