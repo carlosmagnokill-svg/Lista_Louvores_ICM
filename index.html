@@ -762,7 +762,7 @@
     </section>
 
     <p class="hint" style="text-align:center;margin-top:18px">
-      v1.3.9 • Lista de Louvores ICM
+      v1.3.10 • Lista de Louvores ICM
     </p>
   </main>
 
@@ -1100,6 +1100,7 @@
               <div class="result-title">
                 <span class="song-number">${escapeHtml(song.number)}</span>
                 - ${escapeHtml(getDisplayTitle(song))}
+                <button class="view-link search-view-link" type="button">Ver</button>
               </div>
               <div class="result-meta">
                 <span class="pill">${escapeHtml(song.collection)}</span>
@@ -1107,6 +1108,10 @@
             </div>
             <button class="btn btn-primary add-result" type="button">Inserir</button>
           `;
+
+          div.querySelector(".search-view-link").addEventListener("click", () => {
+            showLyrics(song);
+          });
 
           div.querySelector(".add-result").addEventListener("click", () => {
             addSong({
@@ -1243,8 +1248,7 @@
         showToast("Louvor removido.");
       }
 
-      function openLyrics(songId) {
-        const song = worshipList.find(item => item.id === songId);
+      function showLyrics(song) {
         if (!song) return;
 
         els.lyricsContent.textContent =
@@ -1253,6 +1257,11 @@
 
         els.lyricsModal.classList.add("show");
         document.body.style.overflow = "hidden";
+      }
+
+      function openLyrics(songId) {
+        const song = worshipList.find(item => item.id === songId);
+        showLyrics(song);
       }
 
       function closeLyrics() {
